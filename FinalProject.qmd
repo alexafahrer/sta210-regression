@@ -1,0 +1,41 @@
+---
+title: "Pokemon"
+subtitle: "Report"
+format: html
+editor: visual
+execute:
+  echo: false
+---
+
+## Introduction and data
+```{r data, message = FALSE, warning = FALSE}
+pokemon <- read.csv("pokemon.csv")
+library(tidyverse)
+library(tidymodels)
+```
+
+### Copied from HW 8:
+The data set we are using is about Pokemon. It has 801 observations and 41 variables. Here is a list of all the variables:
+
+name, japanese name, pokedex number, percentage male, type 1, type 2, classification (as described by the Sun and Moon Pokedex), height, weight, capture rate, base egg steps, abilities, experience growth, base happiness, 18 variables of the amount of damage taken against an attack of a particular type, base hp, base attack, base defense, base special attack, base special defense, base speed, generation, legendary
+
+After brainstorming, we came up with two potential research topics: predicting capture rate based on predictors and predicting pokemon type based on stats and other predictors. Our potential research questions could be: "Can we accurately predict a Pokemon's capture rate based on its base stats, height and weight, type, experience growth, and percentage male?" and "Is it possible to predict a Pokemon's typing based on its base stats and/or other predictors?".
+
+
+## Methodology
+Start with visualizing the data
+Hypothesis testing 
+Interaction terms
+Transformations of variables?
+Variable selection
+Linear / logistic / ordinal / mulitnomial regression
+Missing data
+Mixed models
+
+## Results
+
+
+
+## Discussion
+
+
