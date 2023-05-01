@@ -52,7 +52,7 @@ A linear regression model is best because...
 
 Therefore, we decided that a linear regression model would best suit our research question
 
-```{r}
+```{r histogram}
 pokemon |>
   count(capture_rate)
 
@@ -99,7 +99,7 @@ Many Pokemon only have one type, and thus do not have a second type. This is not
 
 ## Results
 
-```{r}
+```{r model}
 lm1 <- lm(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + base_happiness + hp + attack + defense + sp_attack + sp_defense + speed + is_legendary, data = pokemon)
 summary(lm1)
 ```
