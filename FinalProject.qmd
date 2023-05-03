@@ -117,9 +117,10 @@ summary(lm2)
 
 
 ## Appendix
-Here is a complete look at the Pokemon data set, including the transformations we completed (manually exluding some variables, changing *capture_rate* to be an integer). 
+Here is a partial look at the Pokemon data set, including the transformations we completed (manually exluding some variables, changing *capture_rate* to be an integer). 
 ```{r appendix-a, warning = FALSE, message = FALSE}
-pokemon
+pokemon |> 
+  slice(1:5)
 ```
 
 ```{r appendix-b, warning = FALSE, message = FALSE}
