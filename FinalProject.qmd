@@ -2,12 +2,20 @@
 title: "Pokemon Final Project"
 author: "Alexa Fahrer and Nick Maroulis"
 format: pdf
+editor: visual
 execute:
   echo: false
 ---
 
-## Introduction and data
+## Introduction and Data 
 
+As students who grew up playing Pokemon games, including Pokemon Go, ________, we are interested in examining the factors that contribute to catching Pokemon. After searching for data about Pokemon in relation to catch rate, we came across a data set from Kaggle called "The Complete Pokemon Dataset," with includes information about more than 800 Pokemon from all seven generations (https://www.kaggle.com/datasets/rounakbanik/pokemon?resource=download). The data set has 801 observations-- each a unique Pokemon-- and 41 variables that are a mix of quantitative and qualitative. For this project, we decided to focus on the predictors name, Pokedex number, generation, capture rate, percentage male, the type(s) of the Pokemon, height, weight, the number of steps per egg cycle (base egg steps), experience growth (XP), base happiness, hp, attack, defense, special attack, special defense, speed, and whether the Pokemon is legendary or not.
+
+When attempting to catch a Pokemon, there are many variables that go into if the Pokemon will be caught or not. These variables include type of Pokeball used, level of the wild Pokemon, etc. All of these factors, in addition to RNG (random number generation), are factored into a specific formula to determine if a Pokemon is caught on any given attempt. Details about the formula can be found here: https://bulbapedia.bulbagarden.net/wiki/Catch_rate. Additionally, every Pokemon has its own "catch rate," which is weighted heavily in the formula. Pokemon with a higher catch rate are easier to catch. For example, Pidgey, which is a weak, unevolved Pokemon, has a catch rate of 255, which is tied for the highest, meaning that Pidgey is very easy to catch. However, Mewtwo, a strong, legendary Pokemon, has a catch rate of 3, which is tied for the lowest, meaning that Mewtwo is extremely difficult to catch. Please note that we use "catch rate" and "capture rate" interchangeably. 
+
+In this project, we are examining the following research question: What characteristics of a Pokemon influence catch rate, and can we develop a model that uses these characteristics to predict the catch rate of a Pokemon? Our hypotheses are as follows: larger Pokemon (in terms of height and weight) will have lower capture rates than smaller Pokemon. Pokemon with higher attack and defense stats will have lower capture rates than Pokemon with lower attack and defense stats. Finally, legendary Pokemon will have lower capture rates than non-legendary Pokemon. In the following project, we will make visualizations to explore the data, consider different types of regression models, use variable selection techniques, consider missing data, and select a final model to examine the characteristics of Pokemon in the data set that are statistically significant in influencing capture rate.
+
+## Methodology
 ```{r data, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(tidymodels)
@@ -16,29 +24,9 @@ pokemon <- read.csv("pokemon.csv")
 pokemon[774, 24] = NA
 pokemon$capture_rate <- as.integer(pokemon$capture_rate)
 
-
 pokemon <- pokemon |>
   dplyr::select(name, pokedex_number, generation, capture_rate, percentage_male, type1, type2, height_m, weight_kg, base_egg_steps, experience_growth, base_happiness, hp, attack, defense, sp_attack, sp_defense, speed, is_legendary)
 ```
-
-### Copied from HW 8:
-
-The data set we are using is about Pokemon. It has 801 observations and 41 variables. Here is a list of all the variables:
-
-name, japanese name, pokedex number, percentage male, type 1, type 2, classification (as described by the Sun and Moon Pokedex), height, weight, capture rate, base egg steps, abilities, experience growth, base happiness, 18 variables of the amount of damage taken against an attack of a particular type, base hp, base attack, base defense, base special attack, base special defense, base speed, generation, legendary
-
-After brainstorming, we came up with two potential research topics: predicting capture rate based on predictors and predicting pokemon type based on stats and other predictors. Our potential research questions could be: "Can we accurately predict a Pokemon's capture rate based on its base stats, height and weight, type, experience growth, and percentage male?" and "Is it possible to predict a Pokemon's typing based on its base stats and/or other predictors?".
-
-## Introduction
-
-We are using a dataset about Pokemon. There are 801 observations and 41 variables...
-
-When attempting to catch a Pokemon, there are many variables that go into if the Pokemon will be caught or not. These variables include type of Pokeball used, level of the wild Pokemon, etc. All of these factors, in addition to RNG (random number generation), are factored into a specific formula to determine if a Pokemon is caught on any given attempt. Details about the formula can be found here: https://bulbapedia.bulbagarden.net/wiki/Catch_rate. Every Pokemon has its own "catch rate," which is weighted heavily in the formula. Pokemon with a higher catch rate are easier to catch. For example, Pidgey (a weak, unevolved Pokemon) has a catch rate of 255, which is tied for the highest, implying that Pidgey is very easy to catch. However, Mewtwo (a strong, legendary Pokemon) has a catch rate of 3, which is tied for the lowest, implying that Mewtwo is very difficult to catch. Note: "catch rate" is the same as "capture rate."
-
-Research Question: What characteristics of a Pokemon influence catch rate, and can we develop a model that uses these characteristics to predict the catch rate of a Pokemon.
-
-## Methodology
-
 ### Type of Model
 
 We decided a Linear Regression Model is the best model to predict the catch rate of a Pokemon.
@@ -77,9 +65,6 @@ library(MASS)
 library(glmnet)
 library(caret)
 library(yardstick)
-
-
-
 ```
 
 DO VARIABLE SELECTION HERE
