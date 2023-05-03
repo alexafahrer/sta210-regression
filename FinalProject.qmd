@@ -32,7 +32,7 @@ pokemon <- read.csv("pokemon.csv")
 pokemon[774, 24] = NA
 pokemon$capture_rate <- as.integer(pokemon$capture_rate)
 
-pokemon <- pokemon |>
+pokemon_new <- pokemon |>
   dplyr::select(name, pokedex_number, generation, capture_rate, percentage_male, type1, type2, height_m, weight_kg, base_egg_steps, experience_growth, base_happiness, hp, attack, defense, sp_attack, sp_defense, speed, is_legendary)
 ```
 
@@ -40,7 +40,7 @@ pokemon <- pokemon |>
 We decided a Linear Regression Model is the best model to predict the catch rate of a Pokemon.
 
 ```{r histogram, warning = FALSE, message = FALSE}
-ggplot(data = pokemon, aes(x=capture_rate)) + 
+ggplot(data = pokemon_new, aes(x=capture_rate)) + 
   geom_histogram() + 
   labs(x = "Catch Rate", y = "Number of Pokemon", 
        title = "Number of Pokemon of Each Catch Rate", 
@@ -56,9 +56,19 @@ A logistic regression model also does not make sense in the context of our data 
 ### Missing Data
 Many species of Pokemon do not have a gender, leading to many NA values for the *percentage_male* variable. However, there is a disproportionate amount of legendary Pokemon that do not have a gender. This is because in a Pokemon game, legendaries are unique and special; there is only one of each legendary Pokemon in the "world." Thus, in our data set, 63/70 of legendary Pokemon have an NA for *percentage_male*. This data is MAR (missing at random) since legendary status is an observed variable in the data set. Because these Pokemon are legendary, many of them have extremely low catch rates. Specifically, 53/70 legendary Pokemon have a catch rate of 3, the lowest possible catch rate. This means that our model will most likely not be able to accurately predict legendary Pokemon's catch rate, and there will be worse representation among Pokemon with lower catch rates. The best and easiest solution to this problem is to eliminate the *percentage_male* predictor from the model.
 
-Next, we noticed that while reading the .csv file, R automatically translated the *capture_rate* variable to characters. Upon inspection, Pokemon number 774, Minior, had this listed as its catch rate: "30 (Meteorite)255 (Core)". During battle, Minior has two forms: meteor form and core form. Minior has the "shields down" ability, which means that when Minior is at half health or less, Minior changes from the Meteor form to the core form. However, Minior's catch rate also changes when it changes forms, from 30 (meteor form) to 255 (core form). Due to Minior's ability having a direct relation to the catch rate, we chose to exclude Minior as an observation. We decided to update Minior's catch rate to be NA, thus excluding this observation from the model.
+Next, we noticed that while reading the .csv file, R automatically translated the *capture_rate* variable to characters. Upon inspection, Pokemon number 774, Minior, had this listed as its catch rate: "30 (Meteorite)255 (Core)". During battle, Minior has two forms: meteor form and core form. Minior has the "shields down" ability, which means that when Minior is at half health or less, Minior changes from the Meteor form to the core form. However, Minior's catch rate also changes when it changes forms, from 30 (meteor form) to 255 (core form). Due to Minior's ability having a direct relation to the catch rate, we chose to exclude Minior as an observation. We decided to update Minior's catch rate to be NA, thus excluding this observation from the model. We also made *capture_rate* an integer instead of a character. 
 
-Many Pokemon only have one type, and thus do not have a second type. This is not missing data, this is just the classification of the Pokemon.
+Finally, we noticed that there are 20 Pokemon with missing data for their heights and weights. Upon examining notes from the author of the data set on the website, we realized that these 20 Pokemon all have an alternate form (Alolan). The alternate forms of these Pokemon have different heights and weights than their normal form. As a result, the height and weight of these Pokemon were inputted into the data set as NA values. These values are MNAR (missing not at random), as they are related to unobserved data, which is whether the Pokemon has an alternate form or not. We also read that the data set scraped the Alolan base stats for these 20 Pokemon, so the rest of the information will be based on the alternate form of the Pokemon. We decided to exclude these 20 observations from the data set. 
+
+```{r missing-data}
+pokemon_new <- pokemon_new |> 
+  dplyr::select(name, pokedex_number, generation, capture_rate, type1, type2, height_m, weight_kg, base_egg_steps, experience_growth, base_happiness, hp, attack, defense, sp_attack, sp_defense, speed, is_legendary) |> 
+  filter(!is.na(height_m)) |> 
+  filter(!is.na(capture_rate)) |>   
+  mutate(is_legendary = as.factor(is_legendary))
+```
+
+It is also worth nothing that Pokemon only have one type, and thus do not have a second type. This is not missing data, this is just the classification of the Pokemon.
 
 ### Variable Selection
 After acknowledging missing data, we must next narrow down the variables in the data set to only the important predictors for our model. 
@@ -73,19 +83,14 @@ First, we tried ___
 We decided not to use forward selection and backward elimination methods because they often don't work well with highly correlated variables, and we suspect that some of our predictors are correlated. 
 
 ```{r variable-selection, warning = FALSE, message = FALSE}
-m_all <- regsubsets(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + 
-            base_happiness + hp + attack + defense + sp_attack + 
-            sp_defense + speed + is_legendary, data = pokemon, 
-                  nbest = 1, nvmax = 5)
-summary(m_all)$which
-y <- pokemon$capture_rate
+y <- pokemon_new$capture_rate
 x <- model.matrix(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + 
             base_happiness + hp + attack + defense + sp_attack + 
-            sp_defense + speed + is_legendary, data = pokemon)
-#m_lasso_cv <- cv.glmnet(x, y, alpha = 1)
-#best_lambda <- m_lasso_cv$lambda.min
-#m_best <- glmnet(x, y, alpha = 1, lambda = best_lambda)
-#m_best$beta
+            sp_defense + speed + is_legendary, data = pokemon_new)
+m_lasso_cv <- cv.glmnet(x, y, alpha = 1)
+best_lambda <- m_lasso_cv$lambda.min
+m_best <- glmnet(x, y, alpha = 1, lambda = best_lambda)
+m_best$beta
 ```
 
 DO VARIABLE SELECTION HERE
@@ -106,10 +111,10 @@ Start with visualizing the data Hypothesis testing Interaction terms Transformat
 ```{r model}
 lm1 <- lm(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + 
             base_happiness + hp + attack + defense + sp_attack + 
-            sp_defense + speed + is_legendary, data = pokemon)
+            sp_defense + speed + is_legendary, data = pokemon_new)
 summary(lm1)
 lm2 <- lm(capture_rate ~ height_m*weight_kg + hp + attack + defense + sp_attack + 
-            sp_defense + speed + is_legendary, data = pokemon)
+            sp_defense + speed + is_legendary, data = pokemon_new)
 summary(lm2)
 ```
 
@@ -119,17 +124,17 @@ summary(lm2)
 ## Appendix
 Here is a partial look at the Pokemon data set, including the transformations we completed (manually exluding some variables, changing *capture_rate* to be an integer). 
 ```{r appendix-a, warning = FALSE, message = FALSE}
-pokemon |> 
+pokemon_new |> 
   slice(1:5)
 ```
 
 ```{r appendix-b, warning = FALSE, message = FALSE}
-pokemon |>
+pokemon_new |>
   count(capture_rate)
-pokemon |> 
+pokemon_new |> 
   filter(is.na(capture_rate))
 
-ggplot(data = pokemon, aes(x=capture_rate)) + 
+ggplot(data = pokemon_new, aes(x=capture_rate)) + 
   geom_histogram() + 
   labs(x = "Catch Rate", y = "Number of Pokemon", 
        title = "Number of Pokemon of Each Catch Rate", 
