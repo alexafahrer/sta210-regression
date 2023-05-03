@@ -16,10 +16,18 @@ When attempting to catch a Pokemon, there are many variables that go into if the
 In this project, we are examining the following research question: What characteristics of a Pokemon influence catch rate, and can we develop a model that uses these characteristics to predict the catch rate of a Pokemon? Our main outcome of interest is the variable "capture_rate." Our hypotheses are as follows: larger Pokemon (in terms of height and weight) will have lower capture rates than smaller Pokemon. Pokemon with higher attack and defense stats will have lower capture rates than Pokemon with lower attack and defense stats. Finally, legendary Pokemon will have lower capture rates than non-legendary Pokemon. In the following project, we will make visualizations to explore the data, consider different types of regression models, use variable selection techniques, consider missing data, and select a final model to examine the characteristics of Pokemon in the data set that are statistically significant in influencing capture rate.
 
 ## Methodology
-```{r data, message = FALSE, warning = FALSE}
+```{r packages, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(tidymodels)
+library(Metrics)
+library(leaps)
+library(MASS)
+library(glmnet)
+library(caret)
+library(yardstick)
+```
 
+```{r data, message = FALSE, warning = FALSE}
 pokemon <- read.csv("pokemon.csv")
 pokemon[774, 24] = NA
 pokemon$capture_rate <- as.integer(pokemon$capture_rate)
@@ -61,14 +69,23 @@ We chose to manually eliminate some variables from the data set based on our kno
 
 We now run variable selection models to determine which of the following variables are best/important for predicting catch rate: *type1*, *type2*, *height_m*, *weight_kg*, *base_egg_steps*, *experience_growth*, *base_happiness*, *hp*, *attack*, *defense*, *sp_attack*, *sp_defense*, *speed*, and *is_legendary*.
 
-```{r variable-selection, warning = FALSE, message = FALSE}
-library(Metrics)
-library(leaps)
-library(MASS)
-library(glmnet)
-library(caret)
-library(yardstick)
+First, we tried ___
+We decided not to use forward selection and backward elimination methods because they often don't work well with highly correlated variables, and we suspect that some of our predictors are correlated. 
 
+```{r variable-selection, warning = FALSE, message = FALSE}
+m_all <- regsubsets(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + 
+            base_happiness + hp + attack + defense + sp_attack + 
+            sp_defense + speed + is_legendary, data = pokemon, 
+                  nbest = 1, nvmax = 5)
+summary(m_all)$which
+y <- pokemon$capture_rate
+x <- model.matrix(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + 
+            base_happiness + hp + attack + defense + sp_attack + 
+            sp_defense + speed + is_legendary, data = pokemon)
+#m_lasso_cv <- cv.glmnet(x, y, alpha = 1)
+#best_lambda <- m_lasso_cv$lambda.min
+#m_best <- glmnet(x, y, alpha = 1, lambda = best_lambda)
+#m_best$beta
 ```
 
 DO VARIABLE SELECTION HERE
@@ -87,15 +104,25 @@ Start with visualizing the data Hypothesis testing Interaction terms Transformat
 ## Results
 
 ```{r model}
-lm1 <- lm(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + base_happiness + hp + attack + defense + sp_attack + sp_defense + speed + is_legendary, data = pokemon)
+lm1 <- lm(capture_rate ~ height_m + weight_kg + base_egg_steps + experience_growth + 
+            base_happiness + hp + attack + defense + sp_attack + 
+            sp_defense + speed + is_legendary, data = pokemon)
 summary(lm1)
+lm2 <- lm(capture_rate ~ height_m*weight_kg + hp + attack + defense + sp_attack + 
+            sp_defense + speed + is_legendary, data = pokemon)
+summary(lm2)
 ```
 
 ## Discussion
 
 
 ## Appendix
+Here is a complete look at the Pokemon data set, including the transformations we completed (manually exluding some variables, changing *capture_rate* to be an integer). 
 ```{r appendix-a, warning = FALSE, message = FALSE}
+pokemon
+```
+
+```{r appendix-b, warning = FALSE, message = FALSE}
 pokemon |>
   count(capture_rate)
 pokemon |> 
