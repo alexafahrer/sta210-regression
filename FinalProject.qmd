@@ -11,9 +11,9 @@ execute:
 
 As students who grew up playing Pokemon games, including Pokemon Go, ________, we are interested in examining the factors that contribute to catching Pokemon. After searching for data about Pokemon in relation to catch rate, we came across a data set from Kaggle called "The Complete Pokemon Dataset," with includes information about more than 800 Pokemon from all seven generations (https://www.kaggle.com/datasets/rounakbanik/pokemon?resource=download). The data set has 801 observations-- each a unique Pokemon-- and 41 variables that are a mix of quantitative and qualitative. For this project, we decided to focus on the predictors name, Pokedex number, generation, capture rate, percentage male, the type(s) of the Pokemon, height, weight, the number of steps per egg cycle (base egg steps), experience growth (XP), base happiness, hp, attack, defense, special attack, special defense, speed, and whether the Pokemon is legendary or not.
 
-When attempting to catch a Pokemon, there are many variables that go into if the Pokemon will be caught or not. These variables include type of Pokeball used, level of the wild Pokemon, etc. All of these factors, in addition to RNG (random number generation), are factored into a specific formula to determine if a Pokemon is caught on any given attempt. Details about the formula can be found here: https://bulbapedia.bulbagarden.net/wiki/Catch_rate. Additionally, every Pokemon has its own "catch rate," which is weighted heavily in the formula. Pokemon with a higher catch rate are easier to catch. For example, Pidgey, which is a weak, unevolved Pokemon, has a catch rate of 255, which is tied for the highest, meaning that Pidgey is very easy to catch. However, Mewtwo, a strong, legendary Pokemon, has a catch rate of 3, which is tied for the lowest, meaning that Mewtwo is extremely difficult to catch. Please note that we use "catch rate" and "capture rate" interchangeably. 
+When attempting to catch a Pokemon, there are many variables that go into if the Pokemon will be caught or not. These variables include type of Poke ball used, level of the wild Pokemon, etc. All of these factors, in addition to RNG (random number generation), are factored into a specific formula to determine if a Pokemon is caught on any given attempt. Details about the formula can be found here: https://bulbapedia.bulbagarden.net/wiki/Catch_rate. Additionally, every Pokemon has its own "catch rate," which is weighted heavily in the formula. Pokemon with a higher catch rate are easier to catch. For example, Pidgey, which is a weak, unevolved Pokemon, has a catch rate of 255, which is tied for the highest, meaning that Pidgey is very easy to catch. However, Mewtwo, a strong, legendary Pokemon, has a catch rate of 3, which is tied for the lowest, meaning that Mewtwo is extremely difficult to catch. Please note that we use "catch rate" and "capture rate" interchangeably. 
 
-In this project, we are examining the following research question: What characteristics of a Pokemon influence catch rate, and can we develop a model that uses these characteristics to predict the catch rate of a Pokemon? Our hypotheses are as follows: larger Pokemon (in terms of height and weight) will have lower capture rates than smaller Pokemon. Pokemon with higher attack and defense stats will have lower capture rates than Pokemon with lower attack and defense stats. Finally, legendary Pokemon will have lower capture rates than non-legendary Pokemon. In the following project, we will make visualizations to explore the data, consider different types of regression models, use variable selection techniques, consider missing data, and select a final model to examine the characteristics of Pokemon in the data set that are statistically significant in influencing capture rate.
+In this project, we are examining the following research question: What characteristics of a Pokemon influence catch rate, and can we develop a model that uses these characteristics to predict the catch rate of a Pokemon? Our main outcome of interest is the variable "capture_rate." Our hypotheses are as follows: larger Pokemon (in terms of height and weight) will have lower capture rates than smaller Pokemon. Pokemon with higher attack and defense stats will have lower capture rates than Pokemon with lower attack and defense stats. Finally, legendary Pokemon will have lower capture rates than non-legendary Pokemon. In the following project, we will make visualizations to explore the data, consider different types of regression models, use variable selection techniques, consider missing data, and select a final model to examine the characteristics of Pokemon in the data set that are statistically significant in influencing capture rate.
 
 ## Methodology
 ```{r data, message = FALSE, warning = FALSE}
@@ -27,44 +27,48 @@ pokemon$capture_rate <- as.integer(pokemon$capture_rate)
 pokemon <- pokemon |>
   dplyr::select(name, pokedex_number, generation, capture_rate, percentage_male, type1, type2, height_m, weight_kg, base_egg_steps, experience_growth, base_happiness, hp, attack, defense, sp_attack, sp_defense, speed, is_legendary)
 ```
-### Type of Model
 
+### Type of Model
 We decided a Linear Regression Model is the best model to predict the catch rate of a Pokemon.
 
-The catch rate of Pokemon (in this dataset) is an integer from 3-255. However, there are only 33 unique catch rates among the 801 Pokemon. For example, 50 Pokemon have a catch rate of 60, and a whopping 250 Pokemon have a catch rate of 45. Based off of this information, it may make sense to use a multinational regression model, or, because the data is ordered, an ordinal regression model. This would lead to a model that predicts the catch rate of a Pokemon relative to the 33 unique catch rates. However, this is a lot of outcomes for the response variable. We could simplify this ordinal regression model with some number of different "bins." For example, bin 0 could be all Pokemon with a catch rate of 0-50, bin 1 is all Pokemon with a catch rate of 50-100, etc.
+```{r histogram, warning = FALSE, message = FALSE}
+ggplot(data = pokemon, aes(x=capture_rate)) + 
+  geom_histogram() + 
+  labs(x = "Catch Rate", y = "Number of Pokemon", 
+       title = "Number of Pokemon of Each Catch Rate", 
+       subtitle = "There are 33 Unique Catch Rates")
+```
+
+In this data set, the catch rate of Pokemon is an integer from 3 to 255. However, there are only 33 unique catch rates among the 801 Pokemon. For example, 50 Pokemon have a catch rate of 60 and a whopping 250 Pokemon have a catch rate of 45. Based off of this information, it may make sense to use a multinomial regression model. Since the data are ordered, an ordinal regression model would be another good option. This would lead to a model that predicts the catch rate of a Pokemon relative to the 33 unique catch rates. However, this is a lot of outcomes for the response variable. We could simplify this ordinal regression model with some number of different "bins." For example, bin 0 could be all Pokemon with a catch rate of 0-50, bin 1 is all Pokemon with a catch rate of 50-100, etc.
 
 We decided against using the ordinal regression model for multiple reasons. First, 33 different outcomes for the response variable is a lot. It creates an unnecessarily complicated model. This problem can be fixed by grouping the catch rates into different "bins." However, this is not optimal, because we don't have a strategy for how to create the "bins." How many "bins" should we have? Should they all be of equal length? Without the proper tools, this method does not make sense for our purposes. However, overall, we decided against the ordinal regression model because even though many Pokemon share a catch rate with many others, there are still Pokemon that have a unique catch rate, meaning the current catch rates of Pokemon are not the only possible catch rates. There could still be a new Pokemon introduced that has a fully unique catch rate. If we were tasked with predicting the catch rate of a new Pokemon with certain attributes, our model would no longer make sense if that Pokemon's catch rate was fully unique. We would be looking at the probability that this Pokemon has a certain catch rate, but the Pokemon wouldn't have any of the listed catch rates.
 
-A linear regression model is best because...
+A logistic regression model also does not make sense in the context of our data because our main outcome of interest, capture rate, is a numerical predictor, and logistic regression requires the response to be categorical and binary. This leaves us with linear regression, which best fits the data we are using since our response variable is numeric. Linear regression with multiple predictors will allow us to examine the relationship between our predictors of interest and outcome while holding other variables constant. Therefore, we decided that a linear regression model would best suit our research question.
 
-Therefore, we decided that a linear regression model would best suit our research question
+### Missing Data
+Many species of Pokemon do not have a gender, leading to many NA values for the *percentage_male* variable. However, there is a disproportionate amount of legendary Pokemon that do not have a gender. This is because in a Pokemon game, legendaries are unique and special; there is only one of each legendary Pokemon in the "world." Thus, in our data set, 63/70 of legendary Pokemon have an NA for *percentage_male*. This data is MAR (missing at random) since legendary status is an observed variable in the data set. Because these Pokemon are legendary, many of them have extremely low catch rates. Specifically, 53/70 legendary Pokemon have a catch rate of 3, the lowest possible catch rate. This means that our model will most likely not be able to accurately predict legendary Pokemon's catch rate, and there will be worse representation among Pokemon with lower catch rates. The best and easiest solution to this problem is to eliminate the *percentage_male* predictor from the model.
 
-```{r histogram}
-pokemon |>
-  count(capture_rate)
+Next, we noticed that while reading the .csv file, R automatically translated the *capture_rate* variable to characters. Upon inspection, Pokemon number 774, Minior, had this listed as its catch rate: "30 (Meteorite)255 (Core)". During battle, Minior has two forms: meteor form and core form. Minior has the "shields down" ability, which means that when Minior is at half health or less, Minior changes from the Meteor form to the core form. However, Minior's catch rate also changes when it changes forms, from 30 (meteor form) to 255 (core form). Due to Minior's ability having a direct relation to the catch rate, we chose to exclude Minior as an observation. We decided to update Minior's catch rate to be NA, thus excluding this observation from the model.
 
-ggplot(data = pokemon, aes(x=capture_rate)) + 
-  geom_histogram() + 
-  labs(x = "Catch Rate", y = "Number of Pokemon", title = "Number of Pokemon of Each Catch Rate")
-```
+Many Pokemon only have one type, and thus do not have a second type. This is not missing data, this is just the classification of the Pokemon.
 
 ### Variable Selection
+After acknowledging missing data, we must next narrow down the variables in the data set to only the important predictors for our model. 
 
-This Pokemon dataset comes with many variables, so we must narrow down to only the important variables.
+For classification and readability purposes, we chose to keep the variables *name*, *pokedex_number*, and *generation*. The response variable is *capture_rate*, so we must of course keep this variable. Other important variables that may play a role in capture rate are *type1*, *type2*, *height_m*, *weight_kg*, *base_egg_steps*, *experience_growth*, *base_happiness*, *hp*, *attack*, *defense*, *sp_attack*, *sp_defense*, *speed*, and *is_legendary*.
 
-For classification and readability purposes, we chose to keep the variables *name*, *pokedex_number*, and *generation*. The response variable is *capture_rate.* Other important variables that may play a role in capture rate are *type1*, *type2*, *height_m*, *weight_kg*, *base_egg_steps*, *experience_growth*, *base_happiness*, *hp*, *attack*, *defense*, *sp_attack*, *sp_defense*, *speed*, and *is_legendary*.
-
-The *japanese_name* is just another version of *name*. The *against\_?* variables are dependent on only typing (*type1* and *type2*), and it will be more useful to just look at the typing of a Pokemon rather than how effective certain moves are against it. There are hundreds of different abilities a Pokemon can have, and very little overlap of abilities between Pokemon, thus we do not need the *abilities* variable. The classification of a Pokemon is almost unique for every Pokemon (there is very little overlap), and it mainly just groups Pokemon by their evolution line, yielding *classification* unwanted. The *percentage_male* variable is excluded due to missing data, which is discussed later.
+We chose to manually eliminate some variables from the data set based on our knowledge of Pokemon. First, the *japanese_name* is just another version of *name*. The *against\_?* variables are dependent on only typing (*type1* and *type2*), and it will be more useful to just look at the typing of a Pokemon rather than how effective certain moves are against it. There are hundreds of different abilities a Pokemon can have, and very little overlap of abilities between Pokemon, so we do not need the *abilities* variable. The classification of a Pokemon is almost unique for every Pokemon (there is very little overlap), and it mainly just groups Pokemon by their evolution line, yielding *classification* unwanted. Finally, the *percentage_male* variable is excluded due to missing data, as dicussed above. 
 
 We now run variable selection models to determine which of the following variables are best/important for predicting catch rate: *type1*, *type2*, *height_m*, *weight_kg*, *base_egg_steps*, *experience_growth*, *base_happiness*, *hp*, *attack*, *defense*, *sp_attack*, *sp_defense*, *speed*, and *is_legendary*.
 
-```{r variable-selection}
+```{r variable-selection, warning = FALSE, message = FALSE}
 library(Metrics)
 library(leaps)
 library(MASS)
 library(glmnet)
 library(caret)
 library(yardstick)
+
 ```
 
 DO VARIABLE SELECTION HERE
@@ -73,13 +77,12 @@ DO VARIABLE SELECTION HERE
 
 Start with visualizing the data Hypothesis testing Interaction terms Transformations of variables? Variable selection Linear / logistic / ordinal / mulitinomial regression Missing data Mixed models
 
-### Missing Data
 
-Many species of Pokemon do not have a gender, leading to many NAs. However, there is a disproportionate amount of legendaries that do not have a gender. This is because in a Pokemon game, legendaries are unique and special; there is only one of each legendary Pokemon in the "world." Thus 63/70 of legendary Pokemon have an NA for percentage_male. This data is MAR (missing at random). Because they are legendary, many of them have extremely low catch rates; to be precise, 53/70 legendary Pokemon have a catch rate of 3, the lowest possible catch rate. This means thaat our model will most likely not be able to accurately predict legendary Pokemon's catch rate, and there will be worse representation among Pokemon with lower catch rates. The best and easiest solution to this problem is to eliminate the *percentage_male* predictor from the model.
-
-While reading the .csv file, the dataset automatically translated the *capture_rate* variable to characters. Upon inspection, Pokemon number 774, Minior, had this listed as its catch rate: "30 (Meteorite)255 (Core)". During battle, Minior has two forms: meteor form and core form. Minior has the "shields down" ability, which means when Minior is at half health or less, Minior changes from the Meteor form to the core form. However, Minior's catch rate also changes when it changes forms, from 30 (meteor form) to 255 (core form). Due to Minior's ability having a direct relation to the catch rate, we chose to exclude Minior as an observation. We updates Minior's catch rate to be NA, thus excluding this observation from the model.
-
-Many Pokemon only have one type, and thus do not have a second type. This is not missing data, this is just the classification of the Pokemon.
+## Prediction
+```{r}
+#new_carats <- tibble(carat = c(0.5, 1, 2))
+#predict(tidy_mod, new_carats)
+```
 
 ## Results
 
@@ -89,3 +92,19 @@ summary(lm1)
 ```
 
 ## Discussion
+
+
+## Appendix
+```{r appendix-a, warning = FALSE, message = FALSE}
+pokemon |>
+  count(capture_rate)
+pokemon |> 
+  filter(is.na(capture_rate))
+
+ggplot(data = pokemon, aes(x=capture_rate)) + 
+  geom_histogram() + 
+  labs(x = "Catch Rate", y = "Number of Pokemon", 
+       title = "Number of Pokemon of Each Catch Rate", 
+       subtitle = "There are 33 Unique Catch Rates")
+```
+
