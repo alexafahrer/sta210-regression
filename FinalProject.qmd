@@ -1,8 +1,7 @@
 ---
-title: "Pokemon"
-subtitle: "Report"
-format: html
-editor: visual
+title: "Pokemon Final Project"
+author: "Alexa Fahrer and Nick Maroulis"
+format: pdf
 execute:
   echo: false
 ---
