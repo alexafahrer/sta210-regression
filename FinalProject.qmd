@@ -40,7 +40,7 @@ pokemon_new <- pokemon |>
 We decided a Linear Regression Model is the best model to predict the catch rate of a Pokemon.
 
 ```{r histogram, warning = FALSE, message = FALSE}
-ggplot(data = pokemon_new, aes(x=capture_rate)) + 
+ggplot(data = pokemon_new, aes(x=log(capture_rate))) + 
   geom_histogram() + 
   labs(x = "Catch Rate", y = "Number of Pokemon", 
        title = "Number of Pokemon of Each Catch Rate", 
