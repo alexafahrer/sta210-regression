@@ -42,15 +42,7 @@ pokemon_new <- pokemon |>
 ### Type of Model
 We decided a Linear Regression Model is the best model to predict the catch rate of a Pokemon.
 
-```{r histogram, warning = FALSE, message = FALSE}
-ggplot(data = pokemon_new, aes(x=capture_rate)) + 
-  geom_histogram() + 
-  labs(x = "Catch Rate", y = "Number of Pokemon", 
-       title = "Number of Pokemon of Each Catch Rate", 
-       subtitle = "There are 33 Unique Catch Rates")
-```
-
-In this data set, the catch rate of Pokemon is an integer from 3 to 255. However, there are only 33 unique catch rates among the 801 Pokemon. For example, 50 Pokemon have a catch rate of 60 and a whopping 250 Pokemon have a catch rate of 45. Based off of this information, it may make sense to use a multinomial regression model. Since the data are ordered, an ordinal regression model would be another good option. This would lead to a model that predicts the catch rate of a Pokemon relative to the 33 unique catch rates. However, this is a lot of outcomes for the response variable. We could simplify this ordinal regression model with some number of different "bins." For example, bin 0 could be all Pokemon with a catch rate of 0-50, bin 1 is all Pokemon with a catch rate of 50-100, etc.
+In this data set, the catch rate of Pokemon is an integer from 3 to 255. However, there are only 33 unique catch rates among the 801 Pokemon. This visualization can be seen in the appendix. For example, 50 Pokemon have a catch rate of 60 and a whopping 250 Pokemon have a catch rate of 45. Based off of this information, it may make sense to use a multinomial regression model. Since the data are ordered, an ordinal regression model would be another good option. This would lead to a model that predicts the catch rate of a Pokemon relative to the 33 unique catch rates. However, this is a lot of outcomes for the response variable. We could simplify this ordinal regression model with some number of different "bins." For example, bin 0 could be all Pokemon with a catch rate of 0-50, bin 1 is all Pokemon with a catch rate of 50-100, etc.
 
 We decided against using the ordinal regression model for multiple reasons. First, 33 different outcomes for the response variable is a lot. It creates an unnecessarily complicated model. This problem can be fixed by grouping the catch rates into different "bins," as outlined above. However, this is not optimal, because we don't have a strategy for how to create the "bins." How many "bins" should we have? Should they all be of equal length? Without the proper tools, this method does not make sense for our purposes. Overall, we decided against the ordinal regression model because even though many Pokemon share a catch rate with many others, there are still Pokemon that have a unique catch rate, meaning the current catch rates of Pokemon are not the only possible catch rates. There could still be a new Pokemon introduced that has a fully unique catch rate. If we were tasked with predicting the catch rate of a new Pokemon with certain attributes, our model would no longer make sense if that Pokemon's catch rate was fully unique. We would be looking at the probability that this Pokemon has a certain catch rate, but the Pokemon wouldn't have any of the listed catch rates.
 
@@ -122,6 +114,10 @@ pokemon_new <- pokemon_new |>
 
 However, we are seeking to find the most important factors of a Pokemon in determining its catch rate. Certain Pokemon types tend to be closely related to the factors of a Pokemon that we are already using as predictors. For example, dragon types typically have very high attack stats, and steel types typically have very high defense stats. By including the Pokemon's type as a predictor, the overall effect of the other predictors on catch rate will most likely be understated. However, certain types may still have an effect on catch rate for reasons other than our predictors. For example, dragon types may be intended by the creators to have lower catch rates than other Pokemon for reasons other than the fact that they have slightly higher stats than the other Pokemon. Thus, this leads us to the creation of two different models.
 
+### Linear Model Assumptions
+When examining the linear model assumptions, we found that independence, linearity, and constant variance are violated, but that normality is not. The actual residual plots and Q-Q plots are included in the appendix for reference. The independence assumption is violated due to the evolution lines of Pokemon. The data set includes Pokemon that are of the same evolutionary line-- for example, Charmander, Charmeleon, and Charizard. Since these Pokemon are of the same evolution line, they will have similar, if not the exact same, type(s), generation, and other information. The independence assumption is violated because knowing information about Charmander would reveal information about Charmeleon and Charizard, for instance. Next, in the residual plot, we do not see symmetrically distributed observations around the horizontal axis. The observations are more spread above the axis, so we assume that the regression model is not linear in the predictors.In the same residual plot, we do not see mostly “evenly-spaced” dots. The variance of the residuals gets larger as the fitted values get larger. We can reasonably assume that there is not constant variance. Finally, from the Q-Q plot, there is some deviation the in the tails, but no clear deviation patterns. We can assume that the errors follow a normal distribution. 
+
+
 ## Results
 
 We will have two different models. The first model only uses the predictors that were selected by the LASSO model.
@@ -131,19 +127,18 @@ lm_stats <- lm(capture_rate ~ hp + attack + defense + sp_attack +
             sp_defense + speed, data = pokemon_new)
 tidy(lm_stats)
 ```
-Our first model shows that the best predictors of capture rate are the six stats of a Pokemon (HP, attack, defense, sp_attack, sp_defense, speed). In general, a Pokemon with higher stats is estimated to, on average, have a lower catch rate. Specifically, HP has the greatest impact. For every 1 point increase of the base stat HP, our model estimates, on average, a 0.59752 decrease in catch rate, while holding the other 5 stats constant. This is with a very low p-value of 2.73e-12, implying a very likely correlation. This kind of relationship can be seen with each of the stats.
-EXPAND? (If you want, or expand in the first paragraph of discussion)
+The model is: $Capture Rate_i = 293.821 - 0.598{hp_i} - 0.345{attack_i} - 0.470{defense_i} - 0.391{sp-attack_i} - 0.472{sp-defense_i} - 0.482{speed_i}$
 
+Our first model shows that the best predictors of capture rate are the six stats of a Pokemon (HP, attack, defense, sp_attack, sp_defense, speed). In general, a Pokemon with higher stats is estimated to, on average, have a lower catch rate. Specifically, HP has the greatest impact. For every 1 point increase of the base stat HP, a Pokemon is expected to, on average, have a 0.59752 decrease in catch rate, while holding the other five stats constant. This is with a very low p-value of 2.73e-12, implying a very likely correlation. Using an informal hypothesis test, each of these six predictors have a p-value lower than a significance level of 0.05, meaning that there is sufficient evidence to suggest that there is a statistically-significant relationship between capture rate and each of these predictors, holding every other predictor constant besides the one being evaluated.  
 
 The second model uses the same predictors as the first, but with the addition of the 18 type predictors.
-
 ```{r model-2}
 lm_stats_type <- lm(capture_rate ~ hp + attack + defense + sp_attack + 
             sp_defense + speed + is_bug + is_dark + is_dragon + is_electric + is_fairy + 
             is_fighting + is_fire + is_flying + is_ghost + is_grass + is_ground + 
             is_ice + is_normal + is_poison + is_psychic + is_rock + 
             is_steel + is_water, data = pokemon_new)
-summary(lm_stats_type)
+tidy(lm_stats_type)
 ```
 
 In our second model, even with the inclusion of the *is_[type]* predictors, the stats of a Pokemon remain the best predictors. We interestingly see that *is_dragon*, *is_fire*, and *is_rock* have low p-values (and negative coefficients). This implies that there is something other than the stats of a Pokemon that causes these three types to have lower capture rates than the other types. FORMAL HYPOTHESIS TEST?
@@ -164,4 +159,43 @@ pokemon_new |>
   slice(1:10)
 ```
 
+```{r appendix-b, warning = FALSE, message = FALSE}
+ggplot(data = pokemon_new, aes(x=capture_rate)) + 
+  geom_histogram() + 
+  labs(x = "Catch Rate", y = "Number of Pokemon", 
+       title = "Number of Pokemon of Each Catch Rate", 
+       subtitle = "There are 33 Unique Catch Rates")
+```
 
+Next, here are the residual plots and the Q-Q plots for the two models. 
+```{r appendix-c}
+lm_stats_aug <- augment(lm_stats)
+ggplot(lm_stats_aug, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "darkred") +
+  labs(title = "Violation of Linearity and Constant Variance", 
+       x = "Fitted (predicted) value", y = "Residual") +
+  theme_bw()
+ggplot(lm_stats_aug, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line() +
+  theme_bw() +
+  labs(title = "Normality not violated", 
+       x = "Theoretical quantiles",
+       y = "Sample quantiles")
+
+lm_stats_type_aug <- augment(lm_stats_type)
+ggplot(lm_stats_type_aug, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "darkred") +
+  labs(title = "Violation of Linearity and Constant Variance",
+        x = "Fitted (predicted) value", y = "Residual") +
+  theme_bw()
+ggplot(lm_stats_type_aug, aes(sample = .resid)) +
+  stat_qq() +
+  stat_qq_line() +
+  theme_bw() +
+  labs(title = "Normality not violated", 
+       x = "Theoretical quantiles",
+       y = "Sample quantiles")
+```
