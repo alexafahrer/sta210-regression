@@ -14,7 +14,7 @@ As students who grew up playing Pokemon games, including Pokemon Go, Pokemon Bla
 
 When attempting to catch a Pokemon, there are many variables that go into if the Pokemon will be caught or not. These variables include type of Poke ball used, level of the wild Pokemon, etc. All of these factors, in addition to RNG (random number generation), are factored into a specific formula to determine if a Pokemon is caught on any given attempt. Details about the formula can be found here: https://bulbapedia.bulbagarden.net/wiki/Catch_rate. Additionally, every Pokemon has its own "catch rate," which is weighted heavily in the formula. Pokemon with a higher catch rate are easier to catch. For example, Pidgey, which is a weak, unevolved Pokemon, has a catch rate of 255, (tied for the highest), meaning that Pidgey is very easy to catch. However, Mewtwo, a strong, legendary Pokemon, has a catch rate of 3, (tied for the lowest), meaning that Mewtwo is extremely difficult to catch. Please note that we use "catch rate" and "capture rate" interchangeably. 
 
-For this project, we decided to focus on the following unique variables in the data set: name, Pokedex number, generation (1 to 7), capture rate (how hard the Pokemon is to catch), percentage male, the type(s) of the Pokemon, height, weight, the number of steps per egg cycle (base egg steps), experience growth, base happiness, hp, attack, defense, special attack, special defense, speed, and whether the Pokemon is legendary or not. The original data set had 22 other variables, but in the data cleaning process, we chose to manually exclude some variables based on our knowledge of Pokemon. For classification and readability purposes, we chose to keep the variables *name*, *pokedex_number*, and *generation*. However, we excluded the *japanese_name* variable because it is just another version of *name*. The *against\_?* variables are dependent on only typing (*type1* and *type2*), and it will be more useful to just look at the typing of a Pokemon rather than how effective certain moves are against it. There are hundreds of different abilities a Pokemon can have, and very little overlap of abilities between Pokemon, so we do not need the *abilities* variable. The classification of a Pokemon is almost unique for every Pokemon (there is very little overlap), and it mainly just groups Pokemon by their evolution line, yielding *classification* unwanted. We changed the type of the *capture_rate* variable to be an integer instead of a character. Next, there was one observation, discussed later, that had two forms with different capture rates, so we mutated its catch rate to be NA. Finally, the most major change we made was adding 18 new variables to the data set. The original data set includes the variables *type1* and *type2*, but since we wanted to examine whether specific types of Pokemon have lower catch rates, we decided to add a new variable for each of the 18 types of Pokemon. This choice is discussed fully in depth in the Variable Transformation section. 
+For this project, we decided to focus on the following unique variables in the data set: name, Pokedex number, generation (1 to 7), capture rate (how hard the Pokemon is to catch), percentage male, the type(s) of the Pokemon, height, weight, the number of steps per egg cycle (base egg steps), experience growth, base happiness, hp, attack, defense, special attack, special defense, speed, and whether the Pokemon is legendary or not. The original data set had 22 other variables, but in the data cleaning process, we chose to manually exclude some variables based on our knowledge of Pokemon. For classification and readability purposes, we chose to keep the variables *name*, *pokedex_number*, and *generation*. However, we excluded the *japanese_name* variable because it is just another version of *name*. The *against\_?* variables are dependent on only typing (*type1* and *type2*), and it will be more useful to just look at the typing of a Pokemon rather than how effective certain moves are against it. There are hundreds of different abilities a Pokemon can have, and very little overlap of abilities between Pokemon, so we do not need the *abilities* variable. The classification of a Pokemon is almost unique for every Pokemon (there is very little overlap), and it mainly just groups Pokemon by their evolution line, yielding *classification* unwanted. The *base_total* is just the sum of the six base stats (*hp*, *attack*, *defense*, *sp_attack*, *sp_defense*, and *speed*)We changed the type of the *capture_rate* variable to be an integer instead of a character. Next, there was one observation, discussed later, that had two forms with different capture rates, so we mutated its catch rate to be NA. Finally, the most major change we made was adding 18 new variables to the data set. The original data set includes the variables *type1* and *type2*, but since we wanted to examine whether specific types of Pokemon have lower catch rates, we decided to add a new variable for each of the 18 types of Pokemon. This choice is discussed fully in depth in the Variable Transformation section. 
 
 In this project, we are examining the following research question: What characteristics of a Pokemon influence catch rate? Our main outcome of interest is the variable *capture_rate.* Our hypotheses are as follows: Pokemon with higher attack, defense, special attack, special defense, HP, and speed stats will have lower capture rates than Pokemon with lower stats. Larger Pokemon (in terms of height and weight) would have lower capture rates than smaller Pokemon. A Pokemon's type will not play a role in the catch rate. Finally, legendary Pokemon will have lower capture rates than non-legendary Pokemon. In the following project, we will make visualizations to explore the data, consider different types of regression models, use variable selection techniques, consider missing data, assess linear model assumptions, and select final models to examine the characteristics of Pokemon in the data set that are statistically significant in influencing capture rate.
 
@@ -120,7 +120,7 @@ When examining the linear model assumptions, we found that independence, lineari
 
 ## Results
 
-We will have two different models. The first model only uses the predictors that were selected by the LASSO model.
+We will have two different models. Model 1 only uses the predictors that were selected by the LASSO model.
 
 ```{r model-1}
 lm_stats <- lm(capture_rate ~ hp + attack + defense + sp_attack + 
@@ -152,6 +152,10 @@ We hypothesized that larger Pokemon (in terms of height and weight) would have l
 
 Finally, we hypothesized that legendary Pokemon would have lower capture rates than non-legendary Pokemon. We were very surprised that *is_legendary* was not chosen as a predictor by the LASSO model. Through our Pokemon experiences, we have always assumed that a legendary Pokemon was harder to catch because it was legendary. We speculate that legendary Pokemon have much higher stats in general, thus the reason they have low catch rates is due to their stats being so high, not because they are legendary. We ran a linear model that uses only *is_legendary* as a predictor, and there was a very likely correlation. More research can be conducted on specifically why *is_legendary* may not be the best predictor of catch rate.
 
+Our models tell us that the best predictors of a Pokemon's catch rate are the stats of that Pokemon. However, not all Pokemon have the same amount of stat points. In fact, this data set had a variable called *base_total*, which is the number of total stat points of a Pokemon. In order to improve our research, we could have created new variables for each stat defined by *[stat]*/*base_total*. Then we use those six new variables, along with *base_total*, as predictors. In this new model, we can see the effect on capture rate of having having a higher stat relative to the other stats, and the effect of having a lot of stats. For example, we could better see if a Pokemon has a low capture rate because it has high stats in general, or because it has a lot of HP stats.
+
+This model has limitations when it comes to the dual typing of Pokemon. Do certain types, when combined together, yield Pokemon that are harder to catch. For example, although bug Pokemon and grass Pokemon both don't have a significant effect on capture rate individually, bug-grass dual-typed Pokemon are typically pretty weak, thus might have a significantly higher capture rate.
+
 ## Appendix
 Here is a partial look at the Pokemon data set, including the transformations we completed (manually excluding some variables, adding new typing variables, changing variables types, excluding some observations, etc.). 
 ```{r appendix-a, warning = FALSE, message = FALSE}
@@ -174,6 +178,7 @@ ggplot(lm_stats_aug, aes(x = .fitted, y = .resid)) +
   geom_point() +
   geom_hline(yintercept = 0, color = "darkred") +
   labs(title = "Violation of Linearity and Constant Variance", 
+       subtitle = "Model 1", 
        x = "Fitted (predicted) value", y = "Residual") +
   theme_bw()
 ggplot(lm_stats_aug, aes(sample = .resid)) +
@@ -181,6 +186,7 @@ ggplot(lm_stats_aug, aes(sample = .resid)) +
   stat_qq_line() +
   theme_bw() +
   labs(title = "Normality not violated", 
+       subtitle = "Model 1", 
        x = "Theoretical quantiles",
        y = "Sample quantiles")
 
@@ -189,6 +195,7 @@ ggplot(lm_stats_type_aug, aes(x = .fitted, y = .resid)) +
   geom_point() +
   geom_hline(yintercept = 0, color = "darkred") +
   labs(title = "Violation of Linearity and Constant Variance",
+       subtitle = "Model 2", 
         x = "Fitted (predicted) value", y = "Residual") +
   theme_bw()
 ggplot(lm_stats_type_aug, aes(sample = .resid)) +
@@ -196,6 +203,7 @@ ggplot(lm_stats_type_aug, aes(sample = .resid)) +
   stat_qq_line() +
   theme_bw() +
   labs(title = "Normality not violated", 
+       subtitle = "Model 2", 
        x = "Theoretical quantiles",
        y = "Sample quantiles")
 ```
